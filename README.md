@@ -1,5 +1,5 @@
 # modern-opencl
-A modern abstraction layer for creating OpenCL applications
+A modern abstraction layer for creating OpenCL applications.
 
 # WIP ;)
 The code is still WIP; major changes may happen to the structure and function signatures.
@@ -85,3 +85,6 @@ __kernel void run(__global int* values, int count, int value_to_add){
   values[id.x] += value_to_add;
 }
 ```
+
+# Notes
+This wrapper started out as part of a project which can be found [**here**](https://github.com/cl-volume-renderer/cl-volume-renderer).
