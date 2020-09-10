@@ -12,6 +12,7 @@ template <typename TDevice>
 class vector {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
+  /// Create a vector on context using already existing vector (r-value)
   vector(const clw::context& context, std::vector<TInternal>&& data, const bool push_on_construction = true)
       : m_context(&context) {
     cl_int error;
@@ -40,6 +41,12 @@ class vector {
       m_device_array = NULL;
     }
   }
+
+  /// Create a vector on context with size specified by element_count
+  vector(const clw::context& context, size_t element_count, const bool push_on_construction = true) : vector(context, std::vector<TInternal>(element_count), push_on_construction){
+    //Do nothing but call other constructor
+  }
+
   // Delete special member functions for now,
   // can be implemented if needed
   vector(const vector& other, const bool push_on_construction = false): vector(*other.m_context,std::vector<TInternal>(other.m_host_array)){};
