@@ -15,9 +15,9 @@ Here I will give examples for how to use this library. Two CPP code sections are
 #include <clw_function.hpp>
 #include <vector>
 int main(){
-  clw_context     context;
-  clw_vector<int> data(context, std::vector<int>{1,2,3,4});
-  clw_function    function(context, "path/to/quick_test.cl", "run");
+  clw::context     context;
+  clw::vector<int> data(context, std::vector<int>{1,2,3,4});
+  clw::function    function(context, "path/to/quick_test.cl", "run");
   function.execute({4,0,0}, {4,0,0}, data, 4, 42);
   data.pull();
   return data[0] + data[1] + data[2];
@@ -31,11 +31,11 @@ int main(){
 #include <clw_function.hpp>
 #include <vector>
 int main(){
-  clw_context test_context; //Create context (device 0 is always selected for now)
+  clw::context test_context; //Create context (device 0 is always selected for now)
 
   //Create array of int with 1 << 14 elements, and don't push to device (i.e GPU) memory
   constexpr const int size = 1 << 14; 
-  clw_vector<int> data(test_context, std::vector<int>(size), false);
+  clw::vector<int> data(test_context, std::vector<int>(size), false);
   
   //Give each value in data a unqiue value
   for(int i = 0; i < size; ++i){
@@ -46,7 +46,7 @@ int main(){
   data.push();
 
   //Create a function (kernel) object from the function called run in file quick_test.cl
-  clw_function f(test_context, "path/to/quick_test.cl", "run", "#define SOME_RANDOM_STUFF");
+  clw::function f(test_context, "path/to/quick_test.cl", "run", "#define SOME_RANDOM_STUFF");
   
   //Run the function (kernel) f on the device (i.e GPU) with:
   // Global size (size, 0, 0) = (size, 1, 1)
