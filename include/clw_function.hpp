@@ -17,8 +17,8 @@
 #ifndef KERNEL_DIR
 #define KERNEL_DIR ""
 #endif
-
-class clw_function{
+namespace clw{
+class function{
   public:
   const std::string do_include(const std::string& path, std::vector<std::string>& already_included){
     std::filesystem::path path_to_file(path);
@@ -71,7 +71,7 @@ class clw_function{
     return code_string;
   }
 
-  clw_function(const clw_context& context, const std::string& path, const std::string& function_name, const std::string prepend = ""): m_function_name(function_name), m_path(path), m_prepend(prepend), m_context(&context){
+  function(const clw::context& context, const std::string& path, const std::string& function_name, const std::string prepend = ""): m_function_name(function_name), m_path(path), m_prepend(prepend), m_context(&context){
     //Generate CL code 
     std::vector<std::string> already_included;
     //std::cout << do_include(/*KERNEL_DIR +*/ path, already_included) << '\n';
@@ -110,7 +110,7 @@ class clw_function{
     clw_fail_hard_on_error(error); 
   }
 
-  ~clw_function(){
+  ~function(){
     if (m_kernel != NULL) {
       clw_fail_hard_on_error(clReleaseKernel(m_kernel));
     }
@@ -119,13 +119,13 @@ class clw_function{
     }
   }
 
-  clw_function(const clw_function&) = delete;
-  clw_function(clw_function&&) = delete;
+  function(const function&) = delete;
+  function(function&&) = delete;
   //Returning new object to prevent device side memory problems
-  [[deprecated("Warning, consider using the move assignment instead; it is much faster.")]] clw_function operator=(const clw_function& other){
-    return clw_function(*other.m_context,other.m_path,other.m_function_name,other.m_prepend); 
+  [[deprecated("Warning, consider using the move assignment instead; it is much faster.")]] function operator=(const function& other){
+    return function(*other.m_context,other.m_path,other.m_function_name,other.m_prepend); 
   }
-  clw_function& operator=(clw_function&& other){
+  function& operator=(function&& other){
     assert(this != &other); //Moving object into itself... why?
 
     if (m_kernel != NULL && m_program != NULL) {
@@ -250,5 +250,6 @@ private:
   std::string m_function_name;
   std::string m_path;
   std::string m_prepend;
-  const clw_context* m_context;
+  const clw::context* m_context;
 };
+}

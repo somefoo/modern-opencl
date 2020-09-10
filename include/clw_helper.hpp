@@ -4,9 +4,9 @@
 #include <string>
 
 //I know it is evil :)
-#define clw_fail_hard_on_error(val) h__clw_fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
+#define clw_fail_hard_on_error(val) clw::h__fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
 
-
+namespace clw{
 /// If non CL_SUCESS is passed, we print the error code and fail hard
 ///@param status the return value of a OpenCL value that will be checked
 static std::string h__get_warning_message(cl_int status) {
@@ -290,7 +290,7 @@ static std::string h__get_warning_message(cl_int status) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
-static void h__clw_fail_hard_on_error_message(cl_int status,std::string file, std::string function, int line){
+static void h__fail_hard_on_error_message(cl_int status,std::string file, std::string function, int line){
   if (status == CL_SUCCESS) return;
 	std::cerr << "WARNING OpenCL call failed. See error message:\n";
   std::cerr << "Failed Call Info: \n";
@@ -308,3 +308,4 @@ static void h__clw_fail_hard_on_error_message(cl_int status,std::string file, st
   exit(1);
 }
 #pragma GCC diagnostic pop
+}

@@ -7,11 +7,12 @@
 #include "clw_context.hpp"
 #include "clw_helper.hpp"
 
+namespace clw{
 template <typename TDevice>
-class clw_vector {
+class vector {
   using TInternal = typename std::remove_const<TDevice>::type;
  public:
-  clw_vector(const clw_context& context, std::vector<TInternal>&& data, const bool push_on_construction = true)
+  vector(const clw::context& context, std::vector<TInternal>&& data, const bool push_on_construction = true)
       : m_context(&context) {
     cl_int error;
     m_host_array = data;
@@ -33,7 +34,7 @@ class clw_vector {
     }
   }
 
-  ~clw_vector() {
+  ~vector() {
     if (m_device_array != NULL) {
       clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
       m_device_array = NULL;
@@ -41,10 +42,10 @@ class clw_vector {
   }
   // Delete special member functions for now,
   // can be implemented if needed
-  clw_vector(const clw_vector& other, const bool push_on_construction = false): clw_vector(*other.m_context,std::vector<TInternal>(other.m_host_array)){};
-  clw_vector(clw_vector&&) = delete;
-  clw_vector& operator=(const clw_vector&) = delete;
-  clw_vector& operator=(clw_vector&& other){
+  vector(const vector& other, const bool push_on_construction = false): vector(*other.m_context,std::vector<TInternal>(other.m_host_array)){};
+  vector(vector&&) = delete;
+  vector& operator=(const vector&) = delete;
+  vector& operator=(vector&& other){
     assert(this != &other); //Moving object into itself... why?
 
     //Deallocate the device memory of current object
@@ -99,5 +100,6 @@ class clw_vector {
   cl_mem m_device_array;
   std::vector<TInternal> m_host_array;
   //We are not the owner!
-  const clw_context* m_context;
+  const clw::context* m_context;
 };
+}

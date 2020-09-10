@@ -35,7 +35,7 @@ const std::vector<cl_device_id> get_devices(const cl_platform_id platform){
   return device_ids;
 }
 
-clw_context::clw_context(){
+clw::context::context(){
   cl_int error;
   auto platforms = get_platforms();
   auto devices = get_devices(platforms[0]);
@@ -47,7 +47,7 @@ clw_context::clw_context(){
   m_device_id = devices[device_to_use];
 }
 
-clw_context::clw_context(void * gl_context){
+clw::context::context(void * gl_context){
   cl_int error;
   auto platforms = get_platforms();
   auto devices = get_devices(platforms[0]);
@@ -66,18 +66,18 @@ clw_context::clw_context(void * gl_context){
   m_device_id = devices[device_to_use];
 }
 
-clw_context::~clw_context(){
+clw::context::~context(){
   clw_fail_hard_on_error(clReleaseCommandQueue(m_command_queue));
   clw_fail_hard_on_error(clReleaseContext(m_context));
 }
-const cl_context clw_context::get_cl_context() const{
+const cl_context clw::context::get_cl_context() const{
   return m_context;
 }
 
-const cl_command_queue clw_context::get_cl_command_queue() const{
+const cl_command_queue clw::context::get_cl_command_queue() const{
   return m_command_queue;
 }
 
-const cl_device_id clw_context::get_cl_device_id() const{
+const cl_device_id clw::context::get_cl_device_id() const{
   return m_device_id;
 }
