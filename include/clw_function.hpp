@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <fstream>
 #include <type_traits>
@@ -10,6 +11,7 @@
 #include <tuple>
 #include <filesystem>
 #include <algorithm>
+#include <stdexcept>
 #include "clw_context.hpp"
 #include "clw_helper.hpp"
 #include "clw_vector.hpp"
@@ -34,8 +36,9 @@ class function{
     }
 
     if(file_stream.fail()){
-      std::cerr << "Failed to open file: " << path_to_file << "\n";
-      exit(1);
+      std::string error_message = "Failed to open file: ";
+      error_message += path_to_file;
+      throw std::invalid_argument(error_message);
     }
 
     already_included.push_back(path_to_file.lexically_normal());
@@ -48,9 +51,7 @@ class function{
         size_t include_start = line.find_first_of('"', include_position);
         size_t include_end = line.find_first_of('"', include_start + 1);
         if(include_start == std::string::npos || include_end == std::string::npos){
-          std::cout << "Error when parsing OpenCL program: \n"
-                    << " #cl_include not of the expected format: clw_include_once \"...\"\n";
-          exit(1);
+          throw std::logic_error("Error when parsing OpenCL program: #cl_include not of the expected format: clw_include_once \"...\"");
         }
         include_start++;
         size_t include_size = include_end - include_start;
@@ -223,12 +224,12 @@ class function{
       std::cerr << "  used local size: " << local_size[0]*local_size[1]*local_size[2] << " > 256\n";
     }
 
-    assert(global_size[0] >= local_size[0]); //Error, global size x < local_size x.
-    assert(global_size[1] >= local_size[1]); //Error, global size y < local_size y.
-    assert(global_size[2] >= local_size[2]); //Error, global size z < local_size z.
-    assert((global_size[0] % local_size[0]) == 0); //Error, global size x is not a multiple of local size x
-    assert((global_size[1] % local_size[1]) == 0); //Error, global size y is not a multiple of local size y
-    assert((global_size[2] % local_size[2]) == 0); //Error, global size z is not a multiple of local size z
+    if(!(global_size[0] >= local_size[0])) throw std::invalid_argument("Global size is smaller than local size: X."); //Error, global size x < local_size x.
+    if(!(global_size[1] >= local_size[1])) throw std::invalid_argument("Global size is smaller than local size: Y."); //Error, global size y < local_size y.
+    if(!(global_size[2] >= local_size[2])) throw std::invalid_argument("Global size is smaller than local size: Z.");; //Error, global size z < local_size z.
+    if(!((global_size[0] % local_size[0]) == 0)) throw std::invalid_argument("Global size is not a multiple of local size: X."); //Error, global size x is not a multiple of local size x
+    if(!((global_size[1] % local_size[1]) == 0)) throw std::invalid_argument("Global size is not a multiple of local size: Y."); //Error, global size y is not a multiple of local size y
+    if(!((global_size[2] % local_size[2]) == 0)) throw std::invalid_argument("Global size is not a multiple of local size: Z."); //Error, global size z is not a multiple of local size z
 
     recurse_helper<0>(arg...);
     cl_int error{0};

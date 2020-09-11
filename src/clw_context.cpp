@@ -1,5 +1,6 @@
 #include "clw_context.hpp"
 #include "clw_helper.hpp"
+#include <stdexcept>
 #include <vector>
 #include <array>
 
@@ -9,9 +10,7 @@ const std::vector<cl_platform_id> get_platforms(){
   clw::opencl_throw_check(clGetPlatformIDs(0, NULL, &platform_id_count), "Failed to obtain OpenCL platform IDs.");
 
   if(platform_id_count == 0){
-    std::cerr << "Error, no OpenCL platform detected.\n";
-    //TODO Replace with EXCEPTION
-    exit(1);
+    throw std::runtime_error("No OpenCL platform detected.");
   }
 
   std::vector<cl_platform_id> platform_ids(platform_id_count);
@@ -25,8 +24,7 @@ const std::vector<cl_device_id> get_devices(const cl_platform_id platform){
   clw::opencl_throw_check(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &device_id_count), "Failed to obtain OpenCL device IDs.");
 
   if(device_id_count == 0){
-    std::cerr << "Error, no OpenCL device detected.\n";
-    exit(1);
+    throw std::runtime_error("No OpenCL device detected.");
   }
 
   std::vector<cl_device_id> device_ids(device_id_count);

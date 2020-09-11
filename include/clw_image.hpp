@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <iostream>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 #include <array>
@@ -38,13 +39,12 @@ class image {
       std::cerr << "Error, moved array is not of the correct size\n";
       std::cerr << " Expected: " << width*height*depth*ChannelSize << '\n';
       std::cerr << " Received: " << m_host_array.size() << '\n';
-      exit(1); 
+      throw std::invalid_argument("Array size is not the same as image size.");
     }
 
     const auto eval_image_type = [&](){
       if(!(width > 1 && height >= 1 && depth >= 1)){
-        std::cerr << "Error, image size is not valid \n";
-        exit(1);
+        throw std::invalid_argument("Image size is not valid.");
       }
       if(width > 1 && height == 1 && depth == 1){
         return CL_MEM_OBJECT_IMAGE1D;
@@ -54,7 +54,7 @@ class image {
         return CL_MEM_OBJECT_IMAGE3D; 
       }else{
         std::cerr << "Error, image size is not valid \n";
-        exit(1);
+        throw std::invalid_argument("Image size is not valid.");
       }
     };
     
@@ -172,8 +172,7 @@ class image {
   //This function does not push!
   void host_copy_from(const image<TInternalConst, ChannelSize>& other){
     if(this->m_dimensions != other.m_dimensions){
-      std::cerr << "Error, dimensions are not compatible.\n";
-      exit(1);
+      throw std::invalid_argument("Dimensions are not compatible.");
     }
     this->m_device_array = other.m_device_array;
   }
@@ -183,8 +182,7 @@ class image {
   //This function does not push!
   void host_copy_from(const image<TInternal, ChannelSize>& other){
     if(this->m_dimensions != other.m_dimensions){
-      std::cerr << "Error, dimensions are not compatible.\n";
-      exit(1);
+      throw std::invalid_argument("Dimensions are not compatible.");
     }
     this->m_device_array = other.m_device_array;
   }

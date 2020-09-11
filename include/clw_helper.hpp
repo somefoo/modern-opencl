@@ -5,8 +5,7 @@
 #include <stdexcept>
 
 //I know it is evil :)
-//#define clw_fail_hard_on_error(val) clw::h__fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
-//#define clw_fail_hard_on_error(val) clw::h__fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
+#define clw_fail_hard_on_error(val) clw::h__fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
 
 namespace clw{
 /// If non CL_SUCESS is passed, we print the error code and fail hard
