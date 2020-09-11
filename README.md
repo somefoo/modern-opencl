@@ -1,5 +1,5 @@
 # modern-opencl
-A modern abstraction layer for creating OpenCL applications
+A modern abstraction layer for creating OpenCL applications.
 
 # WIP ;)
 The code is still WIP; major changes may happen to the structure and function signatures.
@@ -10,6 +10,7 @@ Here I will give examples for how to use this library. Two CPP code sections are
 ## C++ Code (Short)
 ```C++
 ////CPP FILE
+
 #include <clw_context.hpp>
 #include <clw_vector.hpp>
 #include <clw_function.hpp>
@@ -26,6 +27,7 @@ int main(){
 ## C++ Code (Long)
 ```C++
 ////CPP FILE
+
 #include <clw_context.hpp>
 #include <clw_vector.hpp>
 #include <clw_function.hpp>
@@ -35,7 +37,7 @@ int main(){
 
   //Create array of int with 1 << 14 elements, and don't push to device (i.e GPU) memory
   constexpr const int size = 1 << 14; 
-  clw::vector<int> data(test_context, std::vector<int>(size), false);
+  clw::vector<int> data(test_context, size, false);
   
   //Give each value in data a unqiue value
   for(int i = 0; i < size; ++i){
@@ -69,6 +71,8 @@ int main(){
 ```
 ## Kernel Code
 ```C
+////CL FILE
+
 //Include some_file.cl (with multi-include guards)
 #clw_include_once "some_file.cl"
 
@@ -81,3 +85,6 @@ __kernel void run(__global int* values, int count, int value_to_add){
   values[id.x] += value_to_add;
 }
 ```
+
+# Notes
+This wrapper started out as part of a project which can be found [**here**](https://github.com/cl-volume-renderer/cl-volume-renderer).
