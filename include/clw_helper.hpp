@@ -2,9 +2,11 @@
 #include <CL/opencl.h>
 #include <iostream>
 #include <string>
+#include <stdexcept>
 
 //I know it is evil :)
-#define clw_fail_hard_on_error(val) clw::h__fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
+//#define clw_fail_hard_on_error(val) clw::h__fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
+//#define clw_fail_hard_on_error(val) clw::h__fail_hard_on_error_message(val, __FILE__,  __PRETTY_FUNCTION__, __LINE__)
 
 namespace clw{
 /// If non CL_SUCESS is passed, we print the error code and fail hard
@@ -288,6 +290,20 @@ static std::string h__get_warning_message(cl_int status) {
   return warning_message;
 }
 
+static void opencl_throw_check(cl_int status, std::string comment = "None, the developer was lazy..."){
+  if (status == CL_SUCCESS) return;
+	std::cerr << "WARNING OpenCL call failed. See error message:\n";
+  std::cerr << "Failed Call Info: \n";
+  std::cerr << "---------------------------------------\n";
+  std::cerr << "\033[1;31m";
+  std::cerr << "OpenCL Message: " << h__get_warning_message(status) << '\n';
+  std::cerr << "Custom Message: " << comment << '\n';
+  std::cerr << "\033[0m";
+  std::cerr << "---------------------------------------\n";
+
+  throw std::runtime_error("OpenCL call failed.");
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 static void h__fail_hard_on_error_message(cl_int status,std::string file, std::string function, int line){
@@ -303,9 +319,10 @@ static void h__fail_hard_on_error_message(cl_int status,std::string file, std::s
   std::cerr << "\033[0m";
 
   std::cerr << "---------------------------------------\n";
-	std::cerr << "Exiting application... \n";
+	//std::cerr << "Exiting application... \n";
 
-  exit(1);
+  throw std::runtime_error("OpenCL error.");
+  //exit(1);
 }
 #pragma GCC diagnostic pop
 }

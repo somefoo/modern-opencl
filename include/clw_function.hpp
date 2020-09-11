@@ -81,7 +81,7 @@ class function{
     cl_int error;
     const char* indirection[1]{opencl_code.data()};
     m_program = clCreateProgramWithSource(m_context->get_cl_context(), 1, indirection, NULL, &error);
-    clw_fail_hard_on_error(error);
+    clw::opencl_throw_check(error, "Failed to create program from source.");
 
     error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable -cl-std=CL1.2", NULL, NULL);
     if(error != CL_SUCCESS){
@@ -90,32 +90,26 @@ class function{
       std::array<char, 4096> buffer;
       size_t len;
       error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), &len);
-      //The code below looks really weird, but nvidia sometimes prefixes error messages with \0 however, the len is indicating that there is an error, with this we can at least get a piece of the compiler message.
-      if (buffer[0] == '\0' && len > 1)
-        {
-          buffer[0] = ' ';
-          buffer[len - 1] = '\0';
-        }
+
       std::cout << "---------------------------------------\n";
       std::cout << "\033[1;33m" << buffer.data() << "\033[0m" << '\n';
       std::cout << "---------------------------------------\n";
-      clw_fail_hard_on_error(error);
     }
-    clw_fail_hard_on_error(error);
+    clw::opencl_throw_check(error, "Failed to build program.");
 
     cl_build_status build_status;
     error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &build_status, NULL);
 
     m_kernel = clCreateKernel(m_program, function_name.data(), NULL);
-    clw_fail_hard_on_error(error); 
+    clw::opencl_throw_check(error, "Failed to create kernel.");
   }
 
   ~function(){
     if (m_kernel != NULL) {
-      clw_fail_hard_on_error(clReleaseKernel(m_kernel));
+      clw::opencl_throw_check(clReleaseKernel(m_kernel), "Failed to release kernel.");
     }
     if(m_program != NULL){
-      clw_fail_hard_on_error(clReleaseProgram(m_program));
+      clw::opencl_throw_check(clReleaseProgram(m_program), "Failed to release program.");
     }
   }
 
@@ -129,8 +123,8 @@ class function{
     assert(this != &other); //Moving object into itself... why?
 
     if (m_kernel != NULL && m_program != NULL) {
-        clw_fail_hard_on_error(clReleaseKernel(m_kernel));
-        clw_fail_hard_on_error(clReleaseProgram(m_program));
+        clw::opencl_throw_check(clReleaseKernel(m_kernel), "Failed to release kernel on move.");
+        clw::opencl_throw_check(clReleaseProgram(m_program), "Failed to release program on move.");
     }
 
     m_context        = std::move(other.m_context);
@@ -162,8 +156,8 @@ class function{
     if constexpr (sizeof...(rest) > 0){
       recurse_helper<Pos + 1>(rest...);
     }
-    clw_fail_hard_on_error(error);
 
+    clw::opencl_throw_check(error, "Failed to set argument for kernel.");
   }
 
   /// @tparam GX the global X size
@@ -188,7 +182,7 @@ class function{
     error = clEnqueueNDRangeKernel(m_context->get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
 
     //clFinish(m_context.get_cl_command_queue());
-    clw_fail_hard_on_error(error);
+    clw::opencl_throw_check(error, "Failed to execute kernel.");
   }
 
   /// @tparam GX the global X size
@@ -240,7 +234,7 @@ class function{
     cl_int error{0};
     error = clEnqueueNDRangeKernel(m_context->get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
     //clFinish(m_context.get_cl_command_queue());
-    clw_fail_hard_on_error(error);
+    clw::opencl_throw_check(error, "Failed to execute kernel.");
   }
 
 private:

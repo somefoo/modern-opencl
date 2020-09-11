@@ -130,7 +130,7 @@ class image {
     const cl_image_desc   image_desc =   eval_image_desc(image_type);
 
     m_device_array = clCreateImage(context.get_cl_context(), access_right, &image_format, &image_desc, NULL, &error);
-    clw_fail_hard_on_error(error);
+    clw::opencl_throw_check(error, "Failed to create image.");
     if(push_on_construction){
       push();
     }
@@ -138,7 +138,7 @@ class image {
 
   ~image() {
     if (m_device_array != NULL) {
-      clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
+      clw::opencl_throw_check(clReleaseMemObject(m_device_array), "Failed to release image.");
       m_device_array = NULL;
     }
   }
@@ -153,7 +153,7 @@ class image {
     
     //Deallocate the device memory of the current object
     if (m_device_array != NULL) {
-      clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
+      clw::opencl_throw_check(clReleaseMemObject(m_device_array), "Failed to release image on move.");
       m_device_array = NULL;
     }
 
@@ -202,7 +202,7 @@ class image {
   void push() const{
     std::array<size_t, 3> origin{0,0,0};
     std::array<size_t, 3> region{m_dimensions[0],m_dimensions[1],m_dimensions[2]};
-    clw_fail_hard_on_error(clEnqueueWriteImage(
+    clw::opencl_throw_check(clEnqueueWriteImage(
         m_context->get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         origin.data(),region.data(),0,0,m_host_array.data(),0,NULL,NULL));
   }
@@ -210,7 +210,7 @@ class image {
   void pull() {
     std::array<size_t, 3> origin{0,0,0};
     std::array<size_t, 3> region{m_dimensions[0],m_dimensions[1],m_dimensions[2]};
-    clw_fail_hard_on_error(clEnqueueReadImage(
+    clw::opencl_throw_check(clEnqueueReadImage(
         m_context->get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         origin.data(),region.data(),0,0,m_host_array.data(),0,NULL,NULL));
   }

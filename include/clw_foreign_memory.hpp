@@ -14,12 +14,12 @@ class foreign_memory {
     cl_int error;
 
     m_foreign_array = clCreateFromGLTexture(context.get_cl_context(), CL_MEM_WRITE_ONLY, texture_target, mip_level, texture,&error);
-    clw_fail_hard_on_error(error);
+    clw::opencl_throw_check(error);
   }
 
   ~foreign_memory() {
     if (m_foreign_array != NULL) {
-        clw_fail_hard_on_error(clReleaseMemObject(m_foreign_array));
+        clw::opencl_throw_check(clReleaseMemObject(m_foreign_array));
     } else {
       //This should never happen.
       std::cerr << "Warning, double free of device mem. object.\n";
@@ -38,11 +38,11 @@ class foreign_memory {
   }
 
   void release() const {
-    clw_fail_hard_on_error(clEnqueueReleaseGLObjects(m_context.get_cl_command_queue(), 1, &m_foreign_array, 0, NULL, NULL));
+    clw::opencl_throw_check(clEnqueueReleaseGLObjects(m_context.get_cl_command_queue(), 1, &m_foreign_array, 0, NULL, NULL));
   }
 
   void acquire() const {
-    clw_fail_hard_on_error(clEnqueueAcquireGLObjects(m_context.get_cl_command_queue(), 1, &m_foreign_array, 0, NULL, NULL));
+    clw::opencl_throw_check(clEnqueueAcquireGLObjects(m_context.get_cl_command_queue(), 1, &m_foreign_array, 0, NULL, NULL));
   }
 
  private:

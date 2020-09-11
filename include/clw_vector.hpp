@@ -29,7 +29,7 @@ class vector {
                          m_host_array.size() * sizeof(TDevice), NULL, &error);
     }
 
-    clw_fail_hard_on_error(error);
+    clw::opencl_throw_check(error, "Failed to create buffer.");
     if(push_on_construction){
       push();
     }
@@ -37,7 +37,7 @@ class vector {
 
   ~vector() {
     if (m_device_array != NULL) {
-      clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
+      clw::opencl_throw_check(clReleaseMemObject(m_device_array), "Failed to release memory object.");
       m_device_array = NULL;
     }
   }
@@ -57,7 +57,7 @@ class vector {
 
     //Deallocate the device memory of current object
     if (m_device_array != NULL) {
-      clw_fail_hard_on_error(clReleaseMemObject(m_device_array));
+      clw::opencl_throw_check(clReleaseMemObject(m_device_array), "Failed to release memory object on move.");
       m_device_array = NULL;
     }
 
@@ -80,17 +80,17 @@ class vector {
 
   /// Pushes host data to device
   void push() const{
-    clw_fail_hard_on_error(clEnqueueWriteBuffer(
+    clw::opencl_throw_check(clEnqueueWriteBuffer(
         m_context->get_cl_command_queue(), m_device_array, CL_TRUE /*blocking*/,
         0, m_host_array.size() * sizeof(TDevice), m_host_array.data(), 0,
-        NULL, NULL));
+        NULL, NULL), "Failed to push data to device memory.");
   }
   /// Pulls device data
   void pull() {
-        clw_fail_hard_on_error(clEnqueueReadBuffer(
+        clw::opencl_throw_check(clEnqueueReadBuffer(
             m_context->get_cl_command_queue(), m_device_array,
             CL_TRUE /*blocking*/, 0, m_host_array.size() * sizeof(TDevice),
-            m_host_array.data(), 0, NULL, NULL));
+            m_host_array.data(), 0, NULL, NULL), "Failed to pull data into host memory.");
   }
 
   /// Returns a reference to the internal opencl object
