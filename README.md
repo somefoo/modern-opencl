@@ -37,7 +37,7 @@ int main(){
 
   //Create array of int with 1 << 14 elements, and don't push to device (i.e GPU) memory
   constexpr const int size = 1 << 14; 
-  clw::vector<int> data(test_context, size, false);
+  clw::vector<int> data(test_context, size, false /*do not push to device on init.*/);
   
   //Give each value in data a unqiue value
   for(int i = 0; i < size; ++i){
