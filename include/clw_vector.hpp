@@ -103,6 +103,23 @@ class vector {
     return m_host_array.size();
   }
 
+  /// Return iterator to beginning of internal array
+  auto begin(){
+    return m_host_array.begin();
+  }
+  /// Return iterator to beginning of internal array
+  auto begin() const{
+    return m_host_array.begin();
+  }
+  /// Return iterator to end of internal array
+  auto end(){
+    return m_host_array.end();
+  }
+  /// Return iterator to end of internal array
+  auto end() const{
+    return m_host_array.end();
+  }
+
  private:
   cl_mem m_device_array;
   std::vector<TInternal> m_host_array;

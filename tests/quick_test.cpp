@@ -19,8 +19,10 @@ bool run_vector_test_0(){
   f.execute({size,0,0}, {32,0,0}, data, size, 42);
   data.pull();
 
-  for(int i = 0; i < size; ++i){
-   if(data[i] != i + 42) return true;
+  int i = 0;
+  for(auto d : data){
+   if(d != i + 42) return true;
+   i++;
   }
   return false;
 }
