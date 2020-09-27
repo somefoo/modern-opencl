@@ -136,6 +136,11 @@ class image {
     }
   }
 
+  //TODO dimensions can still be 0 here, FIX
+  constexpr image(const clw::context& context, std::array<size_t, 3> dimensions, const bool push_on_construction = false)
+      : image(context, std::vector<TInternal>(dimensions[0]*dimensions[1]*dimensions[2]*ChannelSize), dimensions, push_on_construction){
+  }
+
   ~image() {
     if (m_device_array != NULL) {
       clw::opencl_throw_check(clReleaseMemObject(m_device_array), "Failed to release image.");
