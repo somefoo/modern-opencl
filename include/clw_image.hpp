@@ -241,7 +241,7 @@ class image {
   }
 
   /// Returns the dimensions of the image
-  const std::array<size_t,3>& get_dimensions(){
+  const std::array<size_t,3>& get_dimensions() const{
     return m_dimensions;
   }
 
