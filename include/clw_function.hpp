@@ -90,7 +90,8 @@ class function{
       std::cout << "Kernel failed to compile:\n";
       std::array<char, 4096> buffer;
       size_t len;
-      error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), &len);
+      cl_int error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer.data(), &len);
+      clw::opencl_throw_check(error, "Failed to retrieve error message.");
 
       std::cout << "---------------------------------------\n";
       std::cout << "\033[1;33m" << buffer.data() << "\033[0m" << '\n';
@@ -236,6 +237,11 @@ class function{
     error = clEnqueueNDRangeKernel(m_context->get_cl_command_queue(), m_kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
     //clFinish(m_context.get_cl_command_queue());
     clw::opencl_throw_check(error, "Failed to execute kernel.");
+  }
+
+  //Tries to reload the shader from file
+  void reload(){
+    *this = clw::function(*m_context, m_path, m_function_name, m_prepend);
   }
 
 private:
