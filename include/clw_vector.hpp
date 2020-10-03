@@ -49,7 +49,7 @@ class vector {
 
   // Delete special member functions for now,
   // can be implemented if needed
-  vector(const vector& other, const bool push_on_construction = false): vector(*other.m_context,std::vector<TInternal>(other.m_host_array)){};
+  vector(const vector& other, const bool push_on_construction = false): vector(*other.m_context,std::vector<TInternal>(other.m_host_array), push_on_construction){};
   vector(vector&&) = delete;
   vector& operator=(const vector&) = delete;
   vector& operator=(vector&& other){
