@@ -262,6 +262,12 @@ class image {
     return m_host_array.end();
   }
 
+  /// Return a copy (host side)
+  /// The values will be the same as the host values, NOT DEVICE.
+  clw::image<TDevice, ChannelSize> host_copy(bool push_on_construction = false) const{
+    return clw::image<TDevice, ChannelSize>(*m_context, std::vector(m_host_array), m_dimensions, push_on_construction); 
+  }
+
  private:
   cl_mem m_device_array;
   std::vector<TInternal> m_host_array;
