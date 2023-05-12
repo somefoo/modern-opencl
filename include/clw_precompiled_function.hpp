@@ -77,11 +77,7 @@ class function{
     //Generate CL code 
     cl_int error;
     std::vector<uint8_t> binary_program = clw_generated::get_program_bytecode(name);
-    std::size_t binary_length = binary_program.size();
-    auto cl_device_id = m_context->get_cl_device_id();
-    auto binary = static_cast<const unsigned char*>(binary_program.data());
-
-    m_program = clCreateProgramWithBinary(m_context->get_cl_context(), 1, &cl_device_id, &binary_length, &binary, NULL, &error);
+    m_program = clCreateProgramWithIL(m_context->get_cl_context(), binary_program.data(), binary_program.size(), &error);
     clw::opencl_throw_check(error, "Failed to create program from source.");
 
     error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable -cl-std=CL1.2", NULL, NULL);
