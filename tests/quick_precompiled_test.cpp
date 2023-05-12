@@ -1,6 +1,7 @@
 #include <clw_context.hpp>
 #include <clw_vector.hpp>
-#include <clw_function.hpp>
+//#include <clw_function.hpp>
+#include <clw_precompiled_function.hpp>
 #include <clw_stubs.hpp>
 #include <vector>
 #include <CL/cl.h>
@@ -22,7 +23,7 @@ bool run_vector_test_0(){
   }
   data.push();
 
-  clw::function f(test_context, "quick_test.cl", "run");
+  clw::function f(test_context, "quick_test", "run");
   f.execute({size,0,0}, {32,0,0}, data, size, 42);
   data.pull();
 
@@ -46,7 +47,7 @@ bool run_vector_test_1(){
   }
   data.push();
 
-  clw::function f(test_context, "quick_test.cl", "run");
+  clw::function f(test_context, "quick_test", "run");
   f.execute({size,0,0}, {32,0,0}, data, size, 42);
   data.pull();
 
