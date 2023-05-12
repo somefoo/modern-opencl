@@ -8,8 +8,7 @@ if meson.get_compiler('cpp').get_id() != 'clang'
 endif
 
 
-
-OpenCL_dep = dependency('OpenCL')
+opencl_dep = dependency('OpenCL')
 #modern_opencl_lib = static_library('modern-opencl')
 
 compile_args = ['-fPIC', '-Og', '-Wall', '-Wextra']
@@ -23,12 +22,16 @@ include_dirs = [
 ]
 
 link_with = [
-  OpenCL_dep,
+  opencl_dep,
 ]
 
 modern_opencl_lib = static_library('modern-opencl', sources, include_directories : include_dirs, dependencies : link_with, c_args : compile_args, cpp_args : compile_args)
 
 modern_opencl_dep = declare_dependency(version : '1.0', include_directories : include_dirs, dependencies : link_with, link_with : modern_opencl_lib)
+
+prog_python = find_program('python3')
+#spirv_to_header_conversion_tool = '@0@'.format(meson.current_source_dir()) + '/utility/spirv_to_header.py'
+spirv_to_header_conversion_tool = '@0@'.format(meson.current_source_dir()) + '/utility/multiple_spirv_to_header.py'
 
 # target_sources(['modern-opencl', 'PRIVATE', '${CMAKE_CURRENT_SOURCE_DIR}/src/clw_context.cpp'])
 # set_target_properties(['modern-opencl', 'PROPERTIES', 'LINKER_LANGUAGE', 'CXX'])

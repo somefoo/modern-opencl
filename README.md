@@ -1,3 +1,9 @@
+# Meson Branch
+Install Meson (through pip for example)
+
+On Ubuntu 22.04, other versions may not need `g++-12`:
+```sudo apt install ocl-icd-opencl-dev clang++ g++-12 llvm-spirv```
+
 # modern-opencl
 A modern abstraction layer for creating OpenCL applications.
 

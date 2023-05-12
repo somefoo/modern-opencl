@@ -1,0 +1,2 @@
+#option('shaders_path', type: 'string', value: '@0@/tests/test_kernels'.format(meson.current_source_dir()), description: 'Path to the directory containing the OpenCL kernels.')
+option('shaders_path', type: 'string', value: 'tests/test_kernels', description: 'Path to the directory containing the OpenCL kernels.')
