@@ -23,8 +23,9 @@ bool run_vector_test_0(){
   }
   data.push();
 
-  clw::function f(test_context, "quick_test", "run");
+  clw::function f(test_context, "quick_precompiled_test", "run");
   f.execute({size,0,0}, {32,0,0}, data, size, 42);
+  std::cout << "I crash here\n";
   data.pull();
 
   int i = 0;
@@ -47,7 +48,7 @@ bool run_vector_test_1(){
   }
   data.push();
 
-  clw::function f(test_context, "quick_test", "run");
+  clw::function f(test_context, "quick_precompiled_test", "run");
   f.execute({size,0,0}, {32,0,0}, data, size, 42);
   data.pull();
 
@@ -60,7 +61,7 @@ bool run_vector_test_1(){
 bool run_vector_test_2(){
   clw::context test_context;
 
-  clw_generated::get_program_bytecode("quick_test");
+  clw_generated::get_program_bytecode("quick_precompiled_test");
 
   // Ensure the same call with the string b___this_function_does_not_exist___a will fail by throwing an exception
   try{

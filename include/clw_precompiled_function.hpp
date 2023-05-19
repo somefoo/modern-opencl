@@ -73,14 +73,31 @@ class function{
     return code_string;
   }
 
+
   function(const clw::context& context, const std::string& name, const std::string& function_name): m_function_name(function_name), m_name(name), m_context(&context){
     //Generate CL code 
     cl_int error;
     std::vector<uint8_t> binary_program = clw_generated::get_program_bytecode(name);
-    m_program = clCreateProgramWithIL(m_context->get_cl_context(), binary_program.data(), binary_program.size(), &error);
-    clw::opencl_throw_check(error, "Failed to create program from source.");
+    
+    // Nvidia does not implement clCreateProgramWithIL in OpenCL 3.0
+    //m_program = clCreateProgramWithIL(m_context->get_cl_context(), binary_program.data(), binary_program.size(), &error);
 
-    error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable -cl-std=CL1.2", NULL, NULL);
+    std::size_t binary_length = binary_program.size(); 
+    auto cl_device_id = m_context->get_cl_device_id();
+    auto binary = static_cast<const unsigned char*>(binary_program.data());
+
+    cl_int binary_status = 0;
+    m_program = clCreateProgramWithBinary(m_context->get_cl_context(), 1, &cl_device_id, &binary_length, &binary, &binary_status, &error);
+
+    std::cout << "Binary status: " << binary_status << '\n';
+
+  
+
+
+    clw::opencl_throw_check(error, "Failed to create program from intermediate language.");
+
+    //error = clBuildProgram(m_program, 0, NULL, "-cl-mad-enable -cl-std=CL1.2", NULL, NULL);
+    error = clBuildProgram(m_program, 0, NULL, "", NULL, NULL);
     if(error != CL_SUCCESS){
       //Failed, print the error log
       std::cout << "Kernel failed to compile:\n";
@@ -98,8 +115,63 @@ class function{
     cl_build_status build_status;
     error = clGetProgramBuildInfo(m_program, m_context->get_cl_device_id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &build_status, NULL);
 
+
+
     m_kernel = clCreateKernel(m_program, function_name.data(), NULL);
     clw::opencl_throw_check(error, "Failed to create kernel.");
+
+    // Print information about m_program
+    {
+      cl_uint num_devices;
+      cl_uint reference_count;
+      std::size_t num_kernels;
+      std::array<char, 4096> kernel_names{0};
+      std::array<char, 8192> kernel_source{0};
+      auto kernel_source_ptr = kernel_source.data();
+      // cl_program_binary_sizes
+      std::array<std::size_t, 1> binary_sizes{0};
+
+      clGetProgramInfo(m_program, CL_PROGRAM_NUM_DEVICES, sizeof(cl_uint), &num_devices, NULL);
+      clGetProgramInfo(m_program, CL_PROGRAM_REFERENCE_COUNT, sizeof(cl_uint), &reference_count, NULL);
+      clGetProgramInfo(m_program, CL_PROGRAM_NUM_KERNELS, sizeof(std::size_t), &num_kernels, NULL);
+      clGetProgramInfo(m_program, CL_PROGRAM_KERNEL_NAMES, sizeof(kernel_names), kernel_names.data(), NULL);
+      clGetProgramInfo(m_program, CL_PROGRAM_BINARY_SIZES, sizeof(binary_sizes), binary_sizes.data(), NULL);
+      clGetProgramInfo(m_program, CL_PROGRAM_BINARIES, sizeof(kernel_source), &kernel_source_ptr, NULL);
+
+
+      std::cout << "Binary length: " << std::dec << binary_length << '\n';
+      std::cout << "Program info:\n";
+      std::cout << "  Number of devices: " << num_devices << '\n';
+      std::cout << "  Reference count: " << reference_count << '\n';
+      std::cout << "  Number of kernels: " << num_kernels << '\n';
+      std::cout << "  Kernel names: " << kernel_names.data() << '\n';
+      std::cout << "  Binary sizes: " << binary_sizes[0] << '\n';
+      //std::cout << "  Binary: " << kernel_source.data() << '\n';
+    }
+
+    // Print information about m_kernel
+    {
+      std::array<char, 4096> kernel_name{0};
+      cl_uint num_args;
+      cl_uint reference_count;
+      cl_uint context;
+      cl_uint program;
+
+      clGetKernelInfo(m_kernel, CL_KERNEL_FUNCTION_NAME, sizeof(kernel_name), kernel_name.data(), NULL);
+      clGetKernelInfo(m_kernel, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &num_args, NULL);
+      clGetKernelInfo(m_kernel, CL_KERNEL_REFERENCE_COUNT, sizeof(cl_uint), &reference_count, NULL);
+      clGetKernelInfo(m_kernel, CL_KERNEL_CONTEXT, sizeof(cl_uint), &context, NULL);
+      clGetKernelInfo(m_kernel, CL_KERNEL_PROGRAM, sizeof(cl_uint), &program, NULL);
+
+      std::cout << "Kernel info:\n";
+      std::cout << "  Name: " << kernel_name.data() << '\n';
+      std::cout << "  Number of arguments: " << num_args << '\n';
+      std::cout << "  Reference count: " << reference_count << '\n';
+      std::cout << "  Context: " << context << '\n';
+      std::cout << "  Program: " << program << '\n';
+
+    }
+  
   }
 
   ~function(){

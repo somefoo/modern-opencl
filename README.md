@@ -3,6 +3,11 @@ Install Meson (through pip for example)
 
 On Ubuntu 22.04, other versions may not need `g++-12`:
 ```sudo apt install ocl-icd-opencl-dev clang++ g++-12 llvm-spirv```
+On Ubuntu 22.04 you may need a newer version of llvm-spirv (install newer version of clang https://apt.llvm.org/)
+```sudo apt install llvm-spirv-15```
+Others:
+```sudo apt install libclc-dev libclc-ptx```
+
 
 # modern-opencl
 A modern abstraction layer for creating OpenCL applications.
