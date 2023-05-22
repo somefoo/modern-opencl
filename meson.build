@@ -40,6 +40,10 @@ prog_python = find_program('python3')
 spirv_to_header_conversion_tool = '@0@'.format(meson.current_source_dir()) + '/utility/multiple_spirv_to_cpp.py'
 
 
+clang = find_program('clang', required : true)
+llvm_link = find_program('llvm-link', required : true)
+opt = find_program('opt', required : true)
+llc = find_program('llc', required : true)
 
 # Get all files in opencl_kernel_folder_path
 kernel_files = files(opencl_kernel_folder_path + '/quick_precompiled_test.clcpp')
@@ -57,43 +61,17 @@ list_of_kernels = []
 foreach file : kernel_files
   message('@0@'.format(file))
   kernel_name = fs.stem(file)
+  
+  # Usually you would expect to use nvptx64--nvidiacl as target,
+  # but this causes the .ptr .global state space identifiers not be emitted
+  # in the PTX assembly. This throws a compiler warning, as we link with
+  # the clc library n-nptx64--nvidiacl target - but it works anyway ;)
+  # See: https://github.com/llvm/llvm-project/issues/46954
+
   kernel_llvm = custom_target(kernel_name + '_llvmspv',
                          output : kernel_name + '.ll',
                          input : file,
-                         #command : ['clang', '-cl-std=CLC++2021', '-c', '-target', 'spirv64', '-O0', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-cl-std=CLC++2021', '-c', '-target', 'spir64-unknown-unknown', '-O0', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-cl-std=CLC++2021', '-c', '-target', 'spir64-unknown-unknown', '-O0', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-cl-std=CLC++2021', '-c', '-target', 'spirv64', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-cl-std=CLC++2021', '-c', '-target', 'spirv64-unknown-unknown', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-cl-std=CLC++2021', '-c', '-target', 'spirv64', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-target', 'spirv64-unknown-unknown', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-target', 'spirv64', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-cl-std=CLC++2021', '-c', '-target', 'spirv64-unkown-unkown', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-cc1', '-emit-spirv', '-triple', 'spir64-unknown-unknown', '-x', 'cl', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-
-
-                         #command : ['clang-15', '-cl-std=CLC++2021', '-c', '-target', 'spirv64-unkown-unkown', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-Dcl_clang_storage_class_specifiers', '-isystem', 'libclc/generic/include','-cl-std=CLC++2021', '-c', '-target', 'nvptx', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-x', 'cl', '-target', 'nvptx64', '-cl-std=CLC++2021', '-S' ,'-emit-llvm','-Xclang','-finclude-default-header', '-Xclang', '-fdeclare-opencl-builtins', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-x', 'cl', '-target', 'nvptx64', '-cl-std=CLC++2021', '-S' ,'-emit-llvm','-Xclang','-finclude-default-header', '-Xclang', '-fdeclare-opencl-builtins', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
-
-
-                         #  -Dcl_clang_storage_class_specifiers -include /usr/include/clc/clc.h -target nvptx64--nvidiacl
-                         #command : ['clang', '-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-x', 'cl', '-target', 'nvptx64--nvidiacl', '-cl-std=CLC++2021', '-S' ,'-emit-llvm','@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-Xclang' ,'-finclude-default-header', '-Xclang', '-fdeclare-opencl-builtins', '-x', 'cl', '-target', 'nvptx64--nvidiacl', '-cl-std=CLC++2021', '-S' ,'-emit-llvm','@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-Xclang' ,'-finclude-default-header', '-Xclang', '-fdeclare-opencl-builtins', '-x', 'cl', '-target', 'nvptx64--nvidiacl', '-cl-std=CL3.0','-Xclang','-cl-ext=+__opencl_c_images', '-S' ,'-emit-llvm','@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-Xclang' ,'-finclude-default-header', '-Xclang', '-fdeclare-opencl-builtins', '-x', 'cl', '-target', 'nvptx64--nvidiacl', '-cl-std=CLC++2021','-Xclang','-cl-ext=+__opencl_c_images', '-S' ,'-emit-llvm','@INPUT@', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-cl-std=CLC++2021', '-Xclang', '-cl-ext=+__opencl_c_images', '-xcl', '-target', 'nvptx64--nvidiacl', '-emit-llvm','@INPUT@', '-S', '-o', '@OUTPUT@'],
-                         #command : ['clang-15', '-Xclang', '-no-opaque-pointers','-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-Xclang','-cl-std=CLC++2021','-cl-ext=+__opencl_c_images', '-xcl', '-target', 'nvptx64--nvidiacl', '-emit-llvm','@INPUT@', '-S', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-Xclang', '-no-opaque-pointers','-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-Xclang','-cl-std=CL3.0','-cl-ext=+__opencl_c_images', '-xcl', '-target', 'nvptx64--nvidiacl', '-emit-llvm','@INPUT@', '-S', '-o', '@OUTPUT@'],
-                         #command : ['clang', '-Xclang', '-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-Xclang','-cl-std=CL3.0','-Xclang','-cl-ext=+__opencl_c_images', '-xcl', '-target', 'nvptx64--nvidiacl', '-emit-llvm','@INPUT@', '-S', '-o', '@OUTPUT@'],
-                         command : ['clang','-Dcl_clang_storage_class_specifiers','-isystem','/usr/include/clc', '-include', '/usr/include/clc/clc.h', '-target', 'nvptx64--nvidiacl','-xcl', '@INPUT@', '-emit-llvm', '-S', '-o', '@OUTPUT@'],
-
-                         # Works:
-                         #command : ['clang', '-Dcl_clang_storage_class_specifiers', '-isystem','/usr/include/clc', '-include', 'clc.h', '-xcl', '-target', 'nvptx64--nvidiacl', '-emit-llvm','@INPUT@', '-S', '-o', '@OUTPUT@'],
-                         #command : ['clang','-Dcl_clang_storage_class_specifiers','-isystem','/usr/include/clc', '-include', '/usr/include/clc/clc.h', '-target', 'nvptx64--nvidiacl','-xcl','@INPUT@', '-emit-llvm', '-S', '-o', '@OUTPUT@'],
-                         
-
+                         command : [clang, '-x', 'cl','-c','-target', 'nvptx64--nvcl', '-emit-llvm', '-isystem','/usr/include/clc', '-include', '/usr/include/clc/clc.h','-cl-std=cl2.0','-S', '-o', '@OUTPUT@', '@INPUT@'],
                          build_by_default : true,
                          )
   message('@0@'.format(opencl_headers))
@@ -101,38 +79,26 @@ foreach file : kernel_files
   kernel_llvm_linked = custom_target(kernel_name + '_linked',
                          output : kernel_name + '.bc',
                          input : kernel_llvm,
-                         #command : ['llvm-link-15', '@INPUT@','/usr/lib/clc/nvptx64--nvidiacl.bc','-S', '-o', '@OUTPUT@'],
-                         #command : ['llvm-link', '@INPUT@', '/usr/lib/clc/nvptx64--nvidiacl.bc','-S', '-o', '@OUTPUT@'],
-                         #command : ['llvm-link', '/usr/lib/clc/nvptx64--nvidiacl.bc', '@INPUT@','-S', '-o', '@OUTPUT@'],
-                         #command : ['llvm-link', '@INPUT@', '/usr/lib/clc/nvptx64--nvidiacl.bc', '-S', '-o', '@OUTPUT@'],
-                         #command : ['llvm-link', '@INPUT@', '/usr/lib/clc/nvptx64--nvidiacl.bc', '-v', '-S', '-o', '@OUTPUT@'],
-                         command : ['llvm-link', '@INPUT@', '/usr/lib/clc/nvptx64--nvidiacl.bc', '-v', '-S', '-o', '@OUTPUT@'],
+                         command : [llvm_link,'-S', '-o', '@OUTPUT@', '@INPUT@', '/usr/lib/clc/nvptx64--nvidiacl.bc'],
                          build_by_default : true,
                          )
 
+  kernel_llvm_linked_optimized = custom_target(kernel_name + '_optimized',
+                          output : kernel_name + '.opt.bc',
+                          input : kernel_llvm_linked,
+                          command : [opt,'-internalize', '-internalize-public-api-list=kernel', '-nvvm-reflect', '-O3', '@INPUT@', '-o', '@OUTPUT@'],
+                          build_by_default : true,
+                          )
 
-  kernel_spv = custom_target(kernel_name + '_ptx',
+
+  kernel_ptx = custom_target(kernel_name + '_ptx',
                          output : kernel_name + '.s',
-                         input : kernel_llvm_linked,
-                         command : ['clang', '-target', 'nvptx64--nvidiacl', '@INPUT@', '-S','-o', '@OUTPUT@'],
+                         input : kernel_llvm_linked_optimized,
+                         command : [llc,'-O2','-mcpu=sm_60', '-march=nvptx64', '@INPUT@', '-o', '@OUTPUT@'],
                          build_by_default : true,
                          )
 
-
-
-  #kernel_spv = custom_target(kernel_name + '_ptx',
-  #                       output : kernel_name + '.ptx',
-  #                       input : kernel_llvm_linked,
-  #                       command : ['llc','-mcpu=sm_60', '-march=nvptx64', '@INPUT@', '-o', '@OUTPUT@'],
-  #                       build_by_default : true,
-  #                       )
-
-  #kernel_spv = custom_target(kernel_name,
-  #                        output : kernel_name + '.spv',
-  #                        input : kernel_llvm,
-  #                        command : ['llvm-spirv-15', '@INPUT@', '-o', '@OUTPUT@'],
-  #                        build_by_default : true)
-  list_of_kernels += kernel_spv
+  list_of_kernels += kernel_ptx
 endforeach
 
 kernel_compilation_cpp = custom_target('clw_generated_kernels.cpp',
