@@ -1,6 +1,8 @@
 #pragma once
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #include <CL/opencl.h>
+#include <string>
+
 namespace clw{
 ///Setup the GL context on creation, and unint. the context on EOL
 class context{
@@ -21,6 +23,7 @@ class context{
   const cl_context get_cl_context() const;
   const cl_command_queue get_cl_command_queue() const;
   const cl_device_id get_cl_device_id() const;
+  bool supports_extension(const std::string extension) const;
 
   private:
   cl_context m_context;

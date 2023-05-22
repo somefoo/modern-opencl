@@ -44,6 +44,7 @@ clang = find_program('clang', required : true)
 llvm_link = find_program('llvm-link', required : true)
 opt = find_program('opt', required : true)
 llc = find_program('llc', required : true)
+llvm_spirv = find_program('llvm-spirv', required : true)
 
 # Get all files in opencl_kernel_folder_path
 kernel_files = files(opencl_kernel_folder_path + '/quick_precompiled_test.clcpp')
@@ -61,44 +62,52 @@ list_of_kernels = []
 foreach file : kernel_files
   message('@0@'.format(file))
   kernel_name = fs.stem(file)
-  
   # Usually you would expect to use nvptx64--nvidiacl as target,
   # but this causes the .ptr .global state space identifiers not be emitted
   # in the PTX assembly. This throws a compiler warning, as we link with
   # the clc library n-nptx64--nvidiacl target - but it works anyway ;)
   # See: https://github.com/llvm/llvm-project/issues/46954
-
-  kernel_llvm = custom_target(kernel_name + '_llvmspv',
-                         output : kernel_name + '.ll',
+  ptx_kernel_llvm = custom_target(kernel_name + '_ptx_llvm',
+                         output : kernel_name + '.ptx.ll',
                          input : file,
                          command : [clang, '-x', 'cl','-c','-target', 'nvptx64--nvcl', '-emit-llvm', '-isystem','/usr/include/clc', '-include', '/usr/include/clc/clc.h','-cl-std=cl2.0','-S', '-o', '@OUTPUT@', '@INPUT@'],
                          build_by_default : true,
                          )
+  spv_kernel_llvm = custom_target(kernel_name + '_spv_llvm',
+                         output : kernel_name + '.spv.llvm',
+                         input : file,
+                         command : ['clang', '-cl-std=cl2.0', '-c', '-target', 'spir64', '-O0', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
+                         build_by_default : true,
+                         )
   message('@0@'.format(opencl_headers))
 
-  kernel_llvm_linked = custom_target(kernel_name + '_linked',
-                         output : kernel_name + '.bc',
-                         input : kernel_llvm,
+  ptx_kernel_llvm_linked = custom_target(kernel_name + '_ptx_linked',
+                         output : kernel_name + '.ptx.bc',
+                         input : ptx_kernel_llvm,
                          command : [llvm_link,'-S', '-o', '@OUTPUT@', '@INPUT@', '/usr/lib/clc/nvptx64--nvidiacl.bc'],
                          build_by_default : true,
                          )
-
-  kernel_llvm_linked_optimized = custom_target(kernel_name + '_optimized',
-                          output : kernel_name + '.opt.bc',
-                          input : kernel_llvm_linked,
+  ptx_kernel_llvm_linked_optimized = custom_target(kernel_name + '_ptx_optimized',
+                          output : kernel_name + '.opt.ptx.bc',
+                          input : ptx_kernel_llvm_linked,
                           command : [opt,'-internalize', '-internalize-public-api-list=kernel', '-nvvm-reflect', '-O3', '@INPUT@', '-o', '@OUTPUT@'],
                           build_by_default : true,
                           )
-
-
-  kernel_ptx = custom_target(kernel_name + '_ptx',
-                         output : kernel_name + '.s',
-                         input : kernel_llvm_linked_optimized,
+  ptx_kernel = custom_target(kernel_name + '_ptx',
+                         output : kernel_name + '.ptx.s',
+                         input : ptx_kernel_llvm_linked_optimized,
                          command : [llc,'-O2','-mcpu=sm_60', '-march=nvptx64', '@INPUT@', '-o', '@OUTPUT@'],
                          build_by_default : true,
                          )
 
-  list_of_kernels += kernel_ptx
+  spv_kernel = custom_target(kernel_name + '_spv',
+                          output : kernel_name + '.spv.s',
+                          input : spv_kernel_llvm,
+                          command : [llvm_spirv, '@INPUT@', '-o', '@OUTPUT@'],
+                          build_by_default : true)
+  list_of_kernels += spv_kernel
+
+  list_of_kernels += ptx_kernel
 endforeach
 
 kernel_compilation_cpp = custom_target('clw_generated_kernels.cpp',
@@ -106,6 +115,7 @@ kernel_compilation_cpp = custom_target('clw_generated_kernels.cpp',
                               input : list_of_kernels,
                               command : [prog_python, spirv_to_header_conversion_tool, '@INPUT@', '@OUTPUT@'],
                               build_by_default : true)
+
 
 # Compile object
 #kernel_object = library('clw_generated_kernels', kernel_compilation_object)

@@ -57,6 +57,7 @@ def main():
             f.write("  };\n")
         f.write("}\n")
 
+
         # String containing all program names separated by commas
         valid_names = ", ".join([f"{name_data_pair[0]}" for name_data_pair in input_data])
         p = []
@@ -81,7 +82,7 @@ def main():
             p.append("")
         p.append("    else")
         p.append("    {")
-        p.append(f"      throw std::invalid_argument(\"Unknown program name, available: {valid_names}\");")
+        p.append(f"      throw std::invalid_argument(\"Unknown program name, available: {valid_names}, given name: \" + name + \" Notice, the extension _spv or _ptx is appended automatically depending on your architecture!\");")
         p.append("    }")
         p.append("  }")
         p.append("}")

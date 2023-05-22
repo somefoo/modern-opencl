@@ -69,6 +69,19 @@ clw::context::~context(){
   clw::opencl_throw_check(clReleaseCommandQueue(m_command_queue), "Failed to release command queue.");
   clw::opencl_throw_check(clReleaseContext(m_context), "Failed to release context.");
 }
+
+bool clw::context::supports_extension(const std::string extension) const{
+  size_t extension_size = 0;
+  clw::opencl_throw_check(clGetDeviceInfo(m_device_id, CL_DEVICE_EXTENSIONS, 0, NULL, &extension_size), "Failed to obtain OpenCL device extension size.");
+
+  std::vector<char> extensions(extension_size);
+  clw::opencl_throw_check(clGetDeviceInfo(m_device_id, CL_DEVICE_EXTENSIONS, extension_size, extensions.data(), NULL), "Failed to obtain OpenCL device extensions.");
+
+  std::string extensions_string(extensions.begin(), extensions.end());
+  return extensions_string.find(extension) != std::string::npos;
+}
+
+
 const cl_context clw::context::get_cl_context() const{
   return m_context;
 }
