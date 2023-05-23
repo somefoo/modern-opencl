@@ -1,12 +1,5 @@
 project('ModernOpenCL', 'cpp', default_options : ['default_library=static', 'cpp_std=c++20'])
 
-
-if meson.get_compiler('cpp').get_id() != 'clang'
-	warning('ModernOpenCL requires Clang (to compile OpenCL kernels to SPIR-V).')
-	message('You can use Clang by setting the CC and CXX environment variables to clang and clang++ respectively.')
-	error('Wrong compiler')
-endif
-
 # Get shader_path from options and check if it empty
 opencl_kernel_folder_path = get_option('opencl_kernel_folder_path')
 
