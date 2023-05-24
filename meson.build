@@ -1,20 +1,11 @@
 project('ModernOpenCL', 'cpp', default_options : ['default_library=static', 'cpp_std=c++20'])
 
 # Get shader_path from options and check if it empty
-opencl_kernel_folder_path = get_option('opencl_kernel_folder_path')
-
-if opencl_kernel_folder_path == ''
-  warning('''
-      You have not set the opencl_kernel_folder_path option in the file: @0@/meson.options
-      Your custom OpenCL kernels will not be compiled!
-
-      Building tests instead!
-      '''.format(meson.current_source_dir()))
+if not meson.is_subproject()
   opencl_kernel_folder_path = get_option('opencl_kernel_folder_path_test')
 else
-  message('Folder with kernel was set in options: @0@'.format(opencl_kernel_folder_path))
+  opencl_kernel_folder_path = get_option('opencl_kernel_folder_path')
 endif
-
 
 opencl_dep = dependency('OpenCL')
 #modern_opencl_lib = static_library('modern-opencl')
@@ -40,8 +31,8 @@ glob_helper = '@0@'.format(meson.current_source_dir()) + '/utility/glob_helper.p
 kernel_file_glob = run_command(prog_python, '@0@'.format(glob_helper), opencl_kernel_folder_path + '/*.clcpp', check : false).stdout().strip().split(',')
 
 # Check if kernel_files_glob contains any files
-if kernel_file_glob.length() == 0
-  warning('''
+if kernel_file_glob[0] == ''
+  error('''
       No kernel files found in folder: @0@
       '''.format(opencl_kernel_folder_path))
 endif
