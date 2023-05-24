@@ -82,14 +82,14 @@ bool clw::context::supports_extension(const std::string extension) const{
 }
 
 
-const cl_context clw::context::get_cl_context() const{
+cl_context clw::context::get_cl_context() const{
   return m_context;
 }
 
-const cl_command_queue clw::context::get_cl_command_queue() const{
+cl_command_queue clw::context::get_cl_command_queue() const{
   return m_command_queue;
 }
 
-const cl_device_id clw::context::get_cl_device_id() const{
+cl_device_id clw::context::get_cl_device_id() const{
   return m_device_id;
 }

@@ -20,9 +20,9 @@ class context{
   context& operator=(const context&) = delete;
   context& operator=(context&&) = delete;
 
-  const cl_context get_cl_context() const;
-  const cl_command_queue get_cl_command_queue() const;
-  const cl_device_id get_cl_device_id() const;
+  cl_context get_cl_context() const;
+  cl_command_queue get_cl_command_queue() const;
+  cl_device_id get_cl_device_id() const;
   bool supports_extension(const std::string extension) const;
 
   private:
