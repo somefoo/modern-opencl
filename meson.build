@@ -30,8 +30,21 @@ compile_args = ['-Og', '-Wall', '-Wextra']
 fs = import('fs')
 
 prog_python = find_program('python3')
+
+# Tool used to convert multiple spirv or ptx files to a single header file
 spirv_to_header_conversion_tool = '@0@'.format(meson.current_source_dir()) + '/utility/multiple_spirv_to_cpp.py'
 
+# Tool used to allow globbing in meson (used to find all .clcpp files in a folder)
+glob_helper = '@0@'.format(meson.current_source_dir()) + '/utility/glob_helper.py'
+
+kernel_file_glob = run_command(prog_python, '@0@'.format(glob_helper), opencl_kernel_folder_path + '/*.clcpp', check : false).stdout().strip().split(',')
+
+# Check if kernel_files_glob contains any files
+if kernel_file_glob.length() == 0
+  warning('''
+      No kernel files found in folder: @0@
+      '''.format(opencl_kernel_folder_path))
+endif
 
 clang = find_program('clang', required : true)
 llvm_link = find_program('llvm-link', required : true)
@@ -40,8 +53,7 @@ llc = find_program('llc', required : true)
 llvm_spirv = find_program('llvm-spirv', required : true)
 
 # Get all files in opencl_kernel_folder_path
-kernel_files = files(opencl_kernel_folder_path + '/quick_precompiled_test.clcpp')
-kernel_files_string = ''
+kernel_files = files(kernel_file_glob)
 
 opencl_dep = dependency('OpenCL')
 opencl_headers = opencl_dep.get_pkgconfig_variable('includedir')
