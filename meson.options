@@ -1,5 +1,5 @@
 # Change `value: 'string'` to the path where you kernel files are located.
-option('opencl_kernel_folder_path', type: 'string', value: '', description: 'Path to the directory containing the OpenCL kernels.')
+option('opencl_kernel_folder_path', type: 'string', value: '', description: 'Path to the directory containing the OpenCL kernels.', yield : true)
 
 # The kernel files used for tests, you don't need to edit this.
-option('opencl_kernel_folder_path_test', type: 'string', value: 'tests/test_kernels', description: 'Path to the directory containing the OpenCL kernels used for tests.')
+option('opencl_kernel_folder_path_test', type: 'string', value: 'tests/test_kernels', description: 'Path to the directory containing the OpenCL kernels used for tests.', yield : true)
