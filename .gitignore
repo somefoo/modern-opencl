@@ -4,3 +4,4 @@ compile_commands.json
 *.swp
 *.swo
 tmp
+.copied_kernels_for_building_binaries

@@ -7,12 +7,37 @@ else
   opencl_kernel_folder_path = get_option('opencl_kernel_folder_path')
 endif
 
+internal_opencl_kernel_folder_path = '.copied_kernels_for_building_binaries'
+
+
+message('''
+  opencl_kernel_folder_path: @0@
+  '''.format(opencl_kernel_folder_path))
+
 opencl_dep = dependency('OpenCL')
 #modern_opencl_lib = static_library('modern-opencl')
 
 compile_args = ['-Og', '-Wall', '-Wextra']
 
+##############################################
+py_module = import('python')
+py3 = py_module.find_installation('python3')
 
+#result = run_command(py3, '-c', 'import sys; print(sys.version_info[0])', check : false)
+status = run_command(py3, 'utility/meson/remove_all_files_in_folder.py', internal_opencl_kernel_folder_path)
+if status.returncode() != 0
+  error('Failed to remove all files in folder: @0@/@1@'.format(meson.current_source_dir(), internal_opencl_kernel_folder_path))
+endif
+status = run_command(py3, 'utility/meson/copy_all_files_from_source_to_destination.py', opencl_kernel_folder_path, internal_opencl_kernel_folder_path)
+if status.returncode() != 0
+  error('Failed to copy files from folder: @1@/@0@ to folder: @1@/@2@'.format(opencl_kernel_folder_path, meson.current_source_dir(), internal_opencl_kernel_folder_path))
+endif
+
+a = run_command(py3, 'utility/meson/find_parent_meson_option.py')
+
+message('a: @0@'.format(a.stdout()))
+
+#run_command(py3, '-c', 'import shutil, os; [shutil.copy2(os.path.join("/path/to/source", f), "/path/to/destination") for f in os.listdir("/path/to/source") if os.path.isfile(os.path.join("/path/to/source", f))]')
 
 
 
@@ -26,15 +51,22 @@ prog_python = find_program('python3')
 spirv_to_header_conversion_tool = '@0@'.format(meson.current_source_dir()) + '/utility/multiple_spirv_to_cpp.py'
 
 # Tool used to allow globbing in meson (used to find all .clcpp files in a folder)
-glob_helper = '@0@'.format(meson.current_source_dir()) + '/utility/glob_helper.py'
-
-kernel_file_glob = run_command(prog_python, '@0@'.format(glob_helper), opencl_kernel_folder_path + '/*.clcpp', check : false).stdout().strip().split(',')
+kernel_file_glob = run_command(py3, 'utility/meson/glob_helper.py', internal_opencl_kernel_folder_path + '/*.clcpp', check : false).stdout().strip().split(',')
 
 # Check if kernel_files_glob contains any files
 if kernel_file_glob[0] == ''
-  error('''
-      No kernel files found in folder: @0@
-      '''.format(opencl_kernel_folder_path))
+  if not meson.is_subproject()
+    error('''                                 
+     No kernel files found in folder: @0@/@1@  
+     '''.format(meson.current_source_dir(), opencl_kernel_folder_path))
+  else
+    error('''                                 
+     You are building this library as a subproject, but you have not specified any kernel files.
+     Ensure you have place the kernel files (.clcpp) in the correct folder. Error message:
+
+     No kernel files found in folder: @0@/@1@  
+     '''.format(meson.current_source_dir(), opencl_kernel_folder_path))
+  endif
 endif
 
 clang = find_program('clang', required : true)
@@ -109,7 +141,7 @@ endforeach
 kernel_compilation_cpp = custom_target('clw_generated_kernels.cpp',
                               output : 'clw_generated_kernels.cpp',
                               input : list_of_kernels,
-                              command : [prog_python, spirv_to_header_conversion_tool, '@INPUT@', '@OUTPUT@'],
+                              command : [py3, spirv_to_header_conversion_tool, '@INPUT@', '@OUTPUT@'],
                               build_by_default : true)
 
 
