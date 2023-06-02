@@ -95,16 +95,23 @@ foreach file : kernel_files
   # in the PTX assembly. This throws a compiler warning, as we link with
   # the clc library n-nptx64--nvidiacl target - but it works anyway ;)
   # See: https://github.com/llvm/llvm-project/issues/46954
+
+  opencl_extensions = '+__opencl_c_read_write_images'
+  opencl_version = 'clc++2021'
+  #TODO Remove the no-narrowing flags
+  #Use -I /use/include/clang/14/include/opencl-c.h and #include <opencl-c.h> instead of -Xclang -finclude-default-header?
   ptx_kernel_llvm = custom_target(kernel_name + '_ptx_llvm',
                          output : kernel_name + '.ptx.ll',
                          input : file,
-                         command : [clang, '-x', 'cl','-c','-target', 'nvptx64--nvcl', '-emit-llvm', '-isystem','/usr/include/clc', '-include', '/usr/include/clc/clc.h','-cl-std=cl2.0','-S', '-o', '@OUTPUT@', '@INPUT@'],
+                         command : [clang, '-x', 'cl','-target', 'nvptx64--nvcl','-Xclang','-cl-ext=@0@'.format(opencl_extensions), '-Xclang','-finclude-default-header', '-Xclang','-fdeclare-opencl-builtins','-Wno-c++11-narrowing', '-Xclang','-cl-ext=+__opencl_c_images','-emit-llvm', '-cl-std=@0@'.format(opencl_version),'-S', '-o', '@OUTPUT@', '@INPUT@'],
                          build_by_default : true,
                          )
+
+
   spv_kernel_llvm = custom_target(kernel_name + '_spv_llvm',
                          output : kernel_name + '.spv.llvm',
                          input : file,
-                         command : ['clang', '-cl-std=cl2.0', '-c', '-target', 'spir64', '-O0', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
+                         command : ['clang', '-cl-std=@0@'.format(opencl_version), '-c','-Xclang','-cl-ext=@0@'.format(opencl_extensions), '-target', 'spir64', '-O0', '-emit-llvm', '-I', opencl_headers, '@INPUT@', '-o', '@OUTPUT@'],
                          build_by_default : true,
                          )
   message('@0@'.format(opencl_headers))
@@ -112,7 +119,7 @@ foreach file : kernel_files
   ptx_kernel_llvm_linked = custom_target(kernel_name + '_ptx_linked',
                          output : kernel_name + '.ptx.bc',
                          input : ptx_kernel_llvm,
-                         command : [llvm_link,'-S', '-o', '@OUTPUT@', '@INPUT@', '/usr/lib/clc/nvptx64--nvidiacl.bc'],
+                         command : [llvm_link,'-S', '-o', '@OUTPUT@', '@INPUT@', '@0@/binary/nvptx64--nvidiacl.bc'.format(meson.current_source_dir())],
                          build_by_default : true,
                          )
   ptx_kernel_llvm_linked_optimized = custom_target(kernel_name + '_ptx_optimized',

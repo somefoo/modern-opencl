@@ -14,6 +14,9 @@ def copy_all_files_from_source_to_destination(source, destination):
         os.makedirs(destination)
     for root, dirs, files in os.walk(source):
         for file in files:
+            # If the file extension ends with clcpp, clhpp, cl or h, copy it
+            if not file.endswith(".clcpp") and not file.endswith(".clhpp") and not file.endswith(".cl") and not file.endswith(".h"):
+                continue
             source_file = os.path.join(root, file)
             destination_file = os.path.join(destination, file)
             shutil.copyfile(source_file, destination_file)
